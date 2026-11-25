@@ -45,6 +45,7 @@
     button:disabled { opacity: 0.45; cursor: not-allowed; }
     button.primary { background: linear-gradient(135deg, #d97706, #b45309); border-color: #f59e0b; color: #fff; }
     button.accent-btn { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: #60a5fa; color: #fff; }
+    button.danger-btn { background: linear-gradient(135deg, #dc2626, #991b1b); border-color: #f87171; color: #fff; }
 
     /* Màn chào & Rút thiên phú */
     #intro-overlay {
@@ -202,12 +203,26 @@
       margin-bottom: 12px;
     }
 
+    .encounter-box {
+      background: #172133;
+      border: 1px solid #3b82f6;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .encounter-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
     .log-box {
       background: #0b0f17;
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 10px;
-      height: 195px;
+      height: 185px;
       overflow-y: auto;
       font-size: 0.9rem;
     }
@@ -216,7 +231,7 @@
 
     .inv-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
       gap: 8px;
     }
     .inv-slot {
@@ -233,7 +248,7 @@
       background: #232f44;
     }
 
-    .item-inspector {
+    .inspector-box {
       margin-top: 10px;
       background: #0b0f17;
       border: 1px solid var(--border);
@@ -304,8 +319,8 @@
       <h1 class="intro-title">Chào mừng đến Kỷ Nguyên Xuyên Không — Thử Thách 100 Ngày</h1>
       <p class="intro-sub">
         Toàn dân đồng loạt rơi vào thế giới hoang dã nguyên thủy. Khởi đầu với một <strong>Nhà gỗ cấp 1</strong>,
-        bạn phải vượt qua <strong>100 ngày</strong> sinh tồn, khai thác Rừng – Sông ngòi – Hang động, thuần hóa thú,
-        dung hợp huyết mạch, chế tạo công trình và nâng cấp căn cứ lên cấp 8.
+        bạn phải vượt qua <strong>100 ngày</strong> sinh tồn, khai thác Rừng – Sông ngòi – Hang động, gặp gỡ & thuần hóa thú,
+        dung hợp huyết mạch từng thú cưng, chế tạo công trình và nâng cấp căn cứ lên cấp 8.
       </p>
 
       <div id="step-welcome">
@@ -342,7 +357,7 @@
 
   <!-- NỘI DUNG CHÍNH -->
   <main class="main-layout">
-    <!-- CỘT TRÁI: PHIÊU LƯU, BALO, CÔNG TRÌNH & CĂN CỨ -->
+    <!-- CỘT TRÁI -->
     <div>
       <section class="box">
         <h2>Giao diện Phiêu lưu & Khai thác</h2>
@@ -355,6 +370,19 @@
 
         <div class="action-grid" id="action-buttons"></div>
 
+        <!-- VÙNG CHẠM TRÁN THÚ HOANG: GẶP TRƯỚC -> QUAN SÁT / THUẦN HÓA / CHIẾN ĐẤU -->
+        <div class="encounter-box hidden" id="wild-encounter-box">
+          <div style="font-weight:700; color:#93c5fd;" id="enc-title">Chạm trán Thú hoang</div>
+          <p style="font-size:0.88rem; margin-top:4px;" id="enc-summary"></p>
+          <p style="font-size:0.84rem; color:#fde68a; margin-top:6px;" id="enc-obs"></p>
+          <div class="encounter-actions">
+            <button class="accent-btn" onclick="observeWildBeast()">Quan sát kỹ</button>
+            <button class="primary" id="btn-tame-wild" onclick="tameWildBeast()">Thuần hóa</button>
+            <button class="danger-btn" onclick="fightWildBeast()">Chiến đấu</button>
+            <button onclick="dismissEncounter()">Rời đi</button>
+          </div>
+        </div>
+
         <div class="log-box" id="adventure-log"></div>
       </section>
 
@@ -362,7 +390,7 @@
         <h2>Balo Hệ Thống (Bấm chọn vật phẩm để xem công dụng)</h2>
         <div class="inv-grid" id="inventory-grid"></div>
 
-        <div class="item-inspector" id="item-inspector">
+        <div class="inspector-box" id="item-inspector">
           <div>
             <div style="font-weight:700; color:#fbbf24;" id="insp-name">Chưa chọn vật phẩm</div>
             <div style="font-size:0.8rem; color:var(--muted);" id="insp-type">Phân loại: -</div>
@@ -373,10 +401,19 @@
 
         <div style="margin-top:14px;">
           <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
-            <strong style="font-size:0.95rem;">Bầy thú đã thuần hóa & Đột biến (<span id="ui-tamed-count">0</span>)</strong>
+            <strong style="font-size:0.95rem;">Bầy thú đã thuần hóa (<span id="ui-tamed-count">0</span> — bấm chọn từng con)</strong>
             <button onclick="growAllBeasts()">Nuôi lớn thú (+Giai đoạn)</button>
           </div>
           <div class="inv-grid" id="tamed-beasts-grid"></div>
+
+          <div class="inspector-box" id="beast-inspector">
+            <div>
+              <div style="font-weight:700; color:#c084fc;" id="pet-insp-name">Chưa chọn thú cưng</div>
+              <div style="font-size:0.8rem; color:var(--muted);" id="pet-insp-meta">Bấm vào một thú cưng bên trên để xem chỉ số & dung hợp huyết mạch riêng.</div>
+              <div style="font-size:0.85rem; margin-top:4px;" id="pet-insp-mut">Đột biến dự kiến: -</div>
+            </div>
+            <button class="primary" id="btn-mutate-selected-pet" onclick="mutateSelectedBeast()" disabled>Dung hợp Huyết mạch</button>
+          </div>
         </div>
       </section>
 
@@ -395,7 +432,7 @@
       </section>
     </div>
 
-    <!-- CỘT PHẢI: CHAT, BẢNG GIAO DỊCH, CHAT RIÊNG NPC -->
+    <!-- CỘT PHẢI -->
     <div>
       <section class="box" id="chat-panel">
         <h2>Kênh Chat Xuyên Không</h2>
@@ -430,130 +467,28 @@
   </main>
 
   <script>
-    // DỮ LIỆU VẬT PHẨM & CÔNG DỤNG TRONG BALO
     const ITEM_DEFS = {
-      wood: {
-        name: 'Gỗ',
-        category: 'Tài nguyên tự nhiên',
-        desc: 'Gỗ nguyên thủy khai thác từ rừng. Dùng để nâng cấp Nhà gỗ, dựng công trình hoặc đổi chác.',
-        usable: false
-      },
-      stone: {
-        name: 'Đá',
-        category: 'Tài nguyên khoáng vật',
-        desc: 'Đá cứng dùng để gia cố căn cứ, xây kiến trúc phòng thủ và nâng cấp nhà.',
-        usable: false
-      },
-      fish: {
-        name: 'Cá tươi',
-        category: 'Thực phẩm',
-        desc: 'Sử dụng để ăn ngay: hồi +22 Độ no và +6 HP.',
-        usable: true,
-        useLabel: 'Ăn cá'
-      },
-      water: {
-        name: 'Nước sạch',
-        category: 'Nước uống',
-        desc: 'Sử dụng để giải nhiệt & hồi sức: hồi +15 Độ no và +10 HP.',
-        usable: true,
-        useLabel: 'Uống nước'
-      },
-      ore: {
-        name: 'Quặng',
-        category: 'Khoáng vật quý',
-        desc: 'Quặng kim loại & tinh khoáng từ hang động. Dùng nâng cấp nhà cấp cao, chế kiến trúc và giao dịch.',
-        usable: false
-      },
-      meat: {
-        name: 'Thịt thú',
-        category: 'Thực phẩm phân giải',
-        desc: 'Thịt săn được từ thú rừng/quái thú. Sử dụng để ăn: hồi +30 Độ no và +12 HP.',
-        usable: true,
-        useLabel: 'Ăn thịt'
-      },
-      hide: {
-        name: 'Da thú',
-        category: 'Vật liệu phân giải',
-        desc: 'Da dẻ bền dai thu được khi phân giải quái. Dùng chế tạo công trình & giáp/bẫy.',
-        usable: false
-      },
-      feather: {
-        name: 'Lông thú',
-        category: 'Vật liệu phân giải',
-        desc: 'Lông vũ/lông thú hiếm thu được khi săn bắt. Dùng chế tác kiến trúc đặc biệt.',
-        usable: false
-      },
-      bait: {
-        name: 'Mồi thuần hóa',
-        category: 'Đạo cụ thu phục',
-        desc: 'Dùng để dẫn dụ và thuần hóa thú hoang (40 loài). Có thể bấm Sử dụng để lập tức đi dò & thuần thú.',
-        usable: true,
-        useLabel: 'Dùng Mồi'
-      },
-      blueprint: {
-        name: 'Cuộn Bản Vẽ',
-        category: 'Bản vẽ chế tạo',
-        desc: 'Bản thiết kế công trình & kiến trúc cổ xưa. Kích hoạt để nghiên cứu & giảm chi phí chế tạo công trình!',
-        usable: true,
-        useLabel: 'Nghiên cứu'
-      },
-      bloodline: {
-        name: 'Vật phẩm Huyết mạch',
-        category: 'Tinh hoa đột biến',
-        desc: 'Chứa năng lượng huyết mạch thuần khiết. Dùng để dung hợp cho thú đã thuần hóa tạo loài đột biến mới.',
-        usable: true,
-        useLabel: 'Dung hợp thú'
-      },
-      chest: {
-        name: 'Rương báu',
-        category: 'Rương thưởng',
-        desc: 'Rương rơi từ quái/Lãnh chúa hoặc khám phá. Mở ra nhận tài nguyên, bản vẽ hoặc huyết mạch.',
-        usable: true,
-        useLabel: 'Mở Rương'
-      }
+      wood: { name: 'Gỗ', category: 'Tài nguyên tự nhiên', desc: 'Gỗ nguyên thủy khai thác từ rừng. Dùng để nâng cấp Nhà gỗ, dựng công trình hoặc đổi chác.', usable: false },
+      stone: { name: 'Đá', category: 'Tài nguyên khoáng vật', desc: 'Đá cứng dùng để gia cố căn cứ, xây kiến trúc phòng thủ và nâng cấp nhà.', usable: false },
+      fish: { name: 'Cá tươi', category: 'Thực phẩm', desc: 'Sử dụng để ăn ngay: hồi +22 Độ no và +6 HP.', usable: true, useLabel: 'Ăn cá' },
+      water: { name: 'Nước sạch', category: 'Nước uống', desc: 'Sử dụng để giải nhiệt & hồi sức: hồi +15 Độ no và +10 HP.', usable: true, useLabel: 'Uống nước' },
+      ore: { name: 'Quặng', category: 'Khoáng vật quý', desc: 'Quặng kim loại & tinh khoáng từ hang động. Dùng nâng cấp nhà cấp cao, chế kiến trúc và giao dịch.', usable: false },
+      meat: { name: 'Thịt thú', category: 'Thực phẩm phân giải', desc: 'Thịt săn được từ thú rừng/quái thú. Sử dụng để ăn: hồi +30 Độ no và +12 HP.', usable: true, useLabel: 'Ăn thịt' },
+      hide: { name: 'Da thú', category: 'Vật liệu phân giải', desc: 'Da dẻ bền dai thu được khi phân giải quái. Dùng chế tạo công trình & kiến trúc.', usable: false },
+      feather: { name: 'Lông thú', category: 'Vật liệu phân giải', desc: 'Lông vũ/lông thú hiếm thu được khi săn bắt. Dùng chế tác kiến trúc đặc biệt.', usable: false },
+      bait: { name: 'Mồi thuần hóa', category: 'Đạo cụ thu phục', desc: 'Dùng để dẫn dụ và thuần hóa thú hoang khi chạm trán (hoặc bấm Gặp Thú hoang).', usable: true, useLabel: 'Dùng tìm thú' },
+      blueprint: { name: 'Cuộn Bản Vẽ', category: 'Bản vẽ chế tạo', desc: 'Bản thiết kế công trình & kiến trúc cổ xưa. Kích hoạt để nghiên cứu & giảm chi phí chế tạo công trình!', usable: true, useLabel: 'Nghiên cứu' },
+      bloodline: { name: 'Vật phẩm Huyết mạch', category: 'Tinh hoa đột biến', desc: 'Chứa năng lượng huyết mạch thuần khiết. Chọn thú cưng bên dưới rồi bấm Dung hợp Huyết mạch để đột biến riêng từng con.', usable: true, useLabel: 'Dung hợp thú chọn' },
+      chest: { name: 'Rương báu', category: 'Rương thưởng', desc: 'Rương rơi từ quái/Lãnh chúa hoặc khám phá. Mở ra nhận tài nguyên, bản vẽ hoặc huyết mạch.', usable: true, useLabel: 'Mở Rương' }
     };
 
-    // CÔNG TRÌNH & KIẾN TRÚC CHẾ TẠO
     const STRUCTURES = [
-      {
-        id: 'spike_fence',
-        name: 'Hàng Rào Gai',
-        desc: 'Giảm sát thương quái đêm (-2 HP đe dọa) & tăng +8 sức mạnh thủ trại.',
-        cost: { wood: 18, stone: 8, hide: 1 },
-        blueprintDiscount: 1,
-        bonusPower: 8,
-        threatReduction: 2
-      },
-      {
-        id: 'watch_tower',
-        name: 'Tháp Canh Gỗ Đá',
-        desc: 'Tăng +14 sức mạnh săn/thủ & tăng tỉ lệ phát hiện rương báu.',
-        cost: { wood: 30, stone: 20, ore: 2 },
-        blueprintDiscount: 1,
-        bonusPower: 14,
-        threatReduction: 2
-      },
-      {
-        id: 'spirit_altar',
-        name: 'Bàn Tế Huyết Mạch',
-        desc: 'Hỗ trợ dung hợp đột biến & tăng +20 sức mạnh toàn diện cho bầy thú.',
-        cost: { stone: 25, ore: 6, bloodline: 1 },
-        blueprintDiscount: 1,
-        bonusPower: 20,
-        threatReduction: 3
-      },
-      {
-        id: 'grand_citadel',
-        name: 'Kiến Trúc Trấn Thủ Kỷ Nguyên',
-        desc: 'Công trình kiến trúc tối thượng: +32 sức mạnh & giảm -5 sát thương đêm.',
-        cost: { wood: 55, stone: 45, ore: 12, feather: 2 },
-        blueprintDiscount: 1,
-        bonusPower: 32,
-        threatReduction: 5
-      }
+      { id: 'spike_fence', name: 'Hàng Rào Gai', desc: 'Giảm sát thương quái đêm (-2 HP đe dọa) & tăng +8 sức mạnh thủ/săn.', cost: { wood: 18, stone: 8, hide: 1 }, bonusPower: 8, threatReduction: 2 },
+      { id: 'watch_tower', name: 'Tháp Canh Gỗ Đá', desc: 'Tăng +14 sức mạnh & giảm -2 sát thương đêm.', cost: { wood: 30, stone: 20, ore: 2 }, bonusPower: 14, threatReduction: 2 },
+      { id: 'spirit_altar', name: 'Bàn Tế Huyết Mạch', desc: 'Hỗ trợ dung hợp đột biến & tăng +20 sức mạnh toàn diện cho bầy thú.', cost: { stone: 25, ore: 6, bloodline: 1 }, bonusPower: 20, threatReduction: 3 },
+      { id: 'grand_citadel', name: 'Kiến Trúc Trấn Thủ Kỷ Nguyên', desc: 'Công trình kiến trúc tối thượng: +32 sức mạnh & giảm -5 sát thương đêm.', cost: { wood: 55, stone: 45, ore: 12, feather: 2 }, bonusPower: 32, threatReduction: 5 }
     ];
 
-    // 30 THIÊN PHÚ
     const TALENTS = [
       { rank: 'F', name: 'Chân Cứng Đá Mềm', desc: 'Tăng 5% tốc độ di chuyển & giảm nhẹ hao phí khi đi lại.' },
       { rank: 'F', name: 'Bụng Dạ Thép', desc: 'Giảm 10% tốc độ tụt độ no mỗi ngày.' },
@@ -587,7 +522,6 @@
       { rank: 'S', name: 'Thiên Mệnh Kẻ Dẫn Đầu', desc: 'Cộng hưởng toàn diện khai thác, chiến đấu & giao dịch.' }
     ];
 
-    // 40 LOÀI THÚ
     const BEAST_SPECIES = [
       { id: 'f01', name: 'Sói Rừng Xám', zone: 'forest', rank: 'Phổ thông', packMin: 3, lordThreshold: 6, atk: 12, def: 6, hp: 65, mutateTo: 'U Minh Lang Vương' },
       { id: 'f02', name: 'Heo Rừng Nanh Trắng', zone: 'forest', rank: 'Phổ thông', packMin: 2, lordThreshold: 5, atk: 14, def: 9, hp: 80, mutateTo: 'Thiết Giáp Dã Trư' },
@@ -646,9 +580,9 @@
     ];
 
     const ZONES = {
-      forest: { name: 'Rừng', minHouse: 1, desc: 'Khu rừng nguyên thủy rậm rạp: chặt gỗ, hái thảo mộc, săn bầy thú rừng & thu thập mồi.' },
-      river: { name: 'Sông ngòi', minHouse: 3, desc: 'Dòng suối & sông lớn: lấy nước sạch, câu cá, săn thủy thú & tìm khoáng vật ven bờ.' },
-      cave: { name: 'Hang động', minHouse: 4, desc: 'Hang sâu tăm tối: khai thác đá, quặng hiếm, săn quái hang, mở rương báu & tìm huyết mạch.' }
+      forest: { name: 'Rừng', minHouse: 1, desc: 'Khu rừng nguyên thủy rậm rạp: chặt gỗ, gặp thú hoang, thuần hóa hoặc săn bầy thú.' },
+      river: { name: 'Sông ngòi', minHouse: 3, desc: 'Dòng suối & sông lớn: lấy nước sạch, câu cá, gặp thủy thú & săn bầy.' },
+      cave: { name: 'Hang động', minHouse: 4, desc: 'Hang sâu tăm tối: khai thác đá/quặng, chạm trán quái hang, rương báu & huyết mạch.' }
     };
 
     const NPCS = [
@@ -666,22 +600,14 @@
       talent: null,
       zone: 'forest',
       selectedItem: 'meat',
+      selectedPetUid: null,
+      activeEncounter: null,
       researchedBlueprints: 0,
       builtStructures: {},
       tamedBeasts: [],
       inv: {
-        wood: 25,
-        stone: 12,
-        fish: 4,
-        water: 5,
-        ore: 4,
-        meat: 3,
-        hide: 2,
-        feather: 1,
-        bait: 3,
-        blueprint: 1,
-        bloodline: 2,
-        chest: 1
+        wood: 25, stone: 12, fish: 4, water: 5, ore: 4, meat: 3,
+        hide: 2, feather: 1, bait: 4, blueprint: 1, bloodline: 2, chest: 1
       },
       trades: [
         { id: 1, text: 'Đổi 15 Gỗ lấy 1 Bản vẽ chế tạo', give: 'wood', giveQty: 15, get: 'blueprint', getQty: 1 },
@@ -690,12 +616,12 @@
       ],
       worldChat: [
         '[Hệ thống] Kỷ nguyên 100 ngày bắt đầu! Hãy củng cố Nhà gỗ cấp 1 và sinh tồn.',
-        '[Khu 07] Có loài thú đi theo đàn gom đủ số lượng sẽ sinh Lãnh chúa — máu trâu và sát thương cực gắt!'
+        '[Khu 07] Gặp thú hoang ngoài dã ngoại hãy quan sát trước, đủ số lượng đàn sẽ xuất hiện Lãnh chúa!'
       ],
       npcChats: {
         linh: ['Lâm Linh: Chào người xuyên không! Cần trao đổi gì cứ nói riêng với tớ.'],
         minh: ['Trần Minh: Hang động càng về sau càng nhiều rương, nhưng quái cũng mạnh lên rõ rệt.'],
-        an: ['Diệp An: Thuần hóa thú rồi dùng vật phẩm huyết mạch đột biến, biết đâu ra loài mới!']
+        an: ['Diệp An: Bấm chọn từng con thú cưng trong danh sách rồi dùng Huyết mạch để đột biến riêng từng con nhé!']
       }
     };
 
@@ -803,6 +729,7 @@
       const z = ZONES[zoneKey];
       if (state.houseLevel < z.minHouse) return;
       state.zone = zoneKey;
+      state.activeEncounter = null;
       renderAll();
     }
 
@@ -815,145 +742,218 @@
       state.hunger = Math.max(0, state.hunger - cost);
     }
 
-    function runAction(type) {
+    function gatherResources() {
       consumeHunger(6);
+      const dayScale = 1 + (state.day - 1) * 0.03;
+      if (state.zone === 'forest') {
+        const w = Math.max(3, Math.round(6 * dayScale));
+        state.inv.wood += w;
+        if (Math.random() < 0.35) {
+          state.inv.bait += 1;
+          logMsg(`Vào rừng chặt củi được +${w} Gỗ và nhặt thêm +1 Mồi thuần hóa.`);
+        } else {
+          logMsg(`Vào rừng khai thác được +${w} Gỗ.`);
+        }
+      } else if (state.zone === 'river') {
+        const f = Math.max(1, Math.round(2 * dayScale));
+        state.inv.fish += f;
+        state.inv.water += 2;
+        logMsg(`Ra sông câu cá & lấy nước: +${f} Cá, +2 Nước sạch.`);
+      } else {
+        const s = Math.max(3, Math.round(5 * dayScale));
+        const o = Math.max(1, Math.round(2 * dayScale));
+        state.inv.stone += s;
+        state.inv.ore += o;
+        logMsg(`Khám phá Hang động: +${s} Đá, +${o} Quặng.`);
+      }
+      renderAll();
+    }
+
+    // Bước 1 của phiêu lưu: Gặp thú hoang trước
+    function encounterWildBeast() {
+      consumeHunger(5);
+      const species = pickSpeciesByZone(state.zone);
+      const packSize = species.packMin + Math.floor(Math.random() * (species.lordThreshold - species.packMin + 2));
+      const isLord = packSize >= species.lordThreshold;
+      const stageIdx = Math.min(2, Math.floor(Math.random() * 3));
+
+      state.activeEncounter = {
+        species,
+        packSize,
+        isLord,
+        stageIdx,
+        observed: false
+      };
+      logMsg(`Bạn bắt gặp ${packSize} con [${species.rank}] ${species.name} tại ${ZONES[state.zone].name}! Hãy chọn Quan sát, Thuần hóa hoặc Chiến đấu.`);
+      renderAll();
+    }
+
+    function observeWildBeast() {
+      const enc = state.activeEncounter;
+      if (!enc) return;
+      enc.observed = true;
+      const sp = enc.species;
+      const stage = STAGES[enc.stageIdx];
+      const rankPenalty = { 'Phổ thông': 0, 'Ưu việt': 0.1, 'Hiếm': 0.22, 'Sử thi': 0.35, 'Huyền thoại': 0.48 }[sp.rank] || 0;
+      const tameRate = Math.max(20, Math.round((0.82 - rankPenalty) * 100));
+      enc.obsText = `Quan sát: Bậc [${sp.rank}] • Giai đoạn [${stage}] • Đàn ${enc.packSize}/${sp.lordThreshold} con ${enc.isLord ? '(ĐÃ SINH LÃNH CHÚA!)' : '(chưa hóa Lãnh chúa)'} • Công ${sp.atk} / Thủ ${sp.def} • Tỉ lệ thuần hóa ước tính ~${tameRate}% • Huyết mạch đột biến: ${sp.mutateTo}.`;
+      logMsg(`Bạn quan sát kỹ ${sp.name}: ${enc.obsText}`);
+      renderAll();
+    }
+
+    function tameWildBeast() {
+      const enc = state.activeEncounter;
+      if (!enc) return;
+      if (state.inv.bait <= 0) {
+        logMsg('Không có Mồi thuần hóa để bắt thú! Hãy đi Rừng tìm mồi hoặc đổi ở Bảng giao dịch / NPC.');
+        renderAll();
+        return;
+      }
+      state.inv.bait -= 1;
+      const sp = enc.species;
+      const stage = STAGES[enc.stageIdx];
+      const rankPenalty = { 'Phổ thông': 0, 'Ưu việt': 0.1, 'Hiếm': 0.22, 'Sử thi': 0.35, 'Huyền thoại': 0.48 }[sp.rank] || 0;
+      const lordPenalty = enc.isLord ? 0.22 : 0;
+      const successRate = Math.max(0.15, 0.82 - rankPenalty - lordPenalty);
+
+      if (Math.random() < successRate) {
+        const stageMult = enc.stageIdx === 0 ? 0.75 : enc.stageIdx === 1 ? 1.0 : 1.3;
+        const pet = {
+          uid: `pet_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          speciesId: sp.id,
+          name: sp.name,
+          rank: sp.rank,
+          stageIdx: enc.stageIdx,
+          mutated: false,
+          mutateTo: sp.mutateTo,
+          atk: Math.round(sp.atk * stageMult),
+          def: Math.round(sp.def * stageMult),
+          hp: Math.round(sp.hp * stageMult)
+        };
+        state.tamedBeasts.push(pet);
+        state.selectedPetUid = pet.uid;
+        state.activeEncounter = null;
+        logMsg(`Thuần hóa thành công [${sp.rank}] ${sp.name} (${stage})! Thú đã được chọn sẵn trong danh sách.`);
+        if (sp.rank === 'Sử thi' || sp.rank === 'Huyền thoại' || enc.isLord) {
+          addWorldMsg(`[Kỳ tích] Một người chơi vừa thuần hóa thành công ${enc.isLord ? 'Lãnh chúa ' : ''}[${sp.rank}] ${sp.name}!`);
+        }
+      } else {
+        logMsg(`Thuần hóa [${sp.rank}] ${sp.name} thất bại, tiêu hao 1 Mồi thuần hóa. Bạn có thể thử lại hoặc Chiến đấu!`);
+      }
+      renderAll();
+    }
+
+    function fightWildBeast() {
+      const enc = state.activeEncounter;
+      if (!enc) return;
+      const sp = enc.species;
+      const isLord = enc.isLord;
       const dayScale = 1 + (state.day - 1) * 0.03;
       const bBonus = getStructureBonuses();
 
-      if (type === 'gather') {
-        if (state.zone === 'forest') {
-          const w = Math.max(3, Math.round(6 * dayScale));
-          state.inv.wood += w;
-          if (Math.random() < 0.35) {
-            state.inv.bait += 1;
-            logMsg(`Vào rừng chặt củi được +${w} Gỗ và nhặt thêm +1 Mồi thuần hóa.`);
-          } else {
-            logMsg(`Vào rừng khai thác được +${w} Gỗ.`);
-          }
-        } else if (state.zone === 'river') {
-          const f = Math.max(1, Math.round(2 * dayScale));
-          state.inv.fish += f;
-          state.inv.water += 2;
-          logMsg(`Ra sông câu cá & lấy nước: +${f} Cá, +2 Nước sạch.`);
-        } else {
-          const s = Math.max(3, Math.round(5 * dayScale));
-          const o = Math.max(1, Math.round(2 * dayScale));
-          state.inv.stone += s;
-          state.inv.ore += o;
-          logMsg(`Khám phá Hang động: +${s} Đá, +${o} Quặng.`);
-        }
-      } else if (type === 'hunt') {
-        const species = pickSpeciesByZone(state.zone);
-        const packSize = species.packMin + Math.floor(Math.random() * (species.lordThreshold - species.packMin + 2));
-        const isLord = packSize >= species.lordThreshold;
+      const playerPower = 22 + state.houseLevel * 5 + getPetPowerBonus() + bBonus.power + (state.day * 0.6);
+      const enemyPower = (sp.atk + sp.def * 0.6) * (isLord ? 2.2 : 1) * (1 + state.day * 0.015);
+      const winChance = Math.min(0.95, Math.max(0.25, playerPower / (playerPower + enemyPower * 0.7)));
 
-        const playerPower = 22 + state.houseLevel * 5 + getPetPowerBonus() + bBonus.power + (state.day * 0.6);
-        const enemyPower = (species.atk + species.def * 0.6) * (isLord ? 2.2 : 1) * (1 + state.day * 0.015);
-        const winChance = Math.min(0.95, Math.max(0.25, playerPower / (playerPower + enemyPower * 0.7)));
-
-        if (Math.random() > winChance) {
-          const dmg = Math.max(6, Math.round((isLord ? 22 : 11) * (1 + state.day * 0.01) - state.houseLevel * 1.5 - bBonus.threatCut));
-          state.hp = Math.max(1, state.hp - dmg);
-          logMsg(`Chạm trán đàn ${species.name} (${packSize} con)${isLord ? ' — CÓ LÃNH CHÚA!' : ''}: bạn bị thương -${dmg} HP và phải rút lui!`);
-          renderAll();
-          return;
-        }
-
-        const lootMult = isLord ? 2.5 : 1;
-        const meatGain = Math.max(2, Math.round(2 * lootMult * dayScale));
-        const hideGain = Math.max(1, Math.round(1 * lootMult * dayScale));
-        const featherGain = isLord ? 2 : (Math.random() < 0.5 ? 1 : 0);
-
-        state.inv.meat += meatGain;
-        state.inv.hide += hideGain;
-        state.inv.feather += featherGain;
-
-        if (isLord) {
-          state.inv.bloodline += 1;
-          state.inv.ore += 2;
-          logMsg(`Hạ gục LÃNH CHÚA [${species.rank}] ${species.name} (đàn ${packSize} con)! Phân giải & nhận +${meatGain} Thịt, +${hideGain} Da, +${featherGain} Lông, +1 Huyết mạch, +2 Quặng.`);
-          addWorldMsg(`[Tin chấn động] Đàn ${species.name} đạt ngưỡng ${packSize} con sinh Lãnh chúa và đã bị hạ gục!`);
-        } else {
-          logMsg(`Tiêu diệt & phân giải đàn ${species.name} (${packSize} con): nhận +${meatGain} Thịt, +${hideGain} Da, +${featherGain} Lông.`);
-        }
-
-        const chestChance = Math.min(0.9, 0.25 + state.day * 0.006 + (isLord ? 0.35 : 0));
-        if (Math.random() < chestChance) {
-          state.inv.chest += 1;
-          logMsg(`Chiến lợi phẩm có thêm +1 Rương báu rơi từ ${isLord ? 'Lãnh chúa ' : ''}${species.name}!`);
-        }
-      } else if (type === 'tame') {
-        if (state.inv.bait <= 0) {
-          logMsg('Không có Mồi thuần hóa để dụ thú! Hãy đi Rừng tìm mồi hoặc đổi ở Bảng giao dịch / NPC.');
-          renderAll();
-          return;
-        }
-        state.inv.bait -= 1;
-        const species = pickSpeciesByZone(state.zone);
-        const stageIdx = Math.min(2, Math.floor(Math.random() * 3));
-        const stage = STAGES[stageIdx];
-        const rankPenalty = { 'Phổ thông': 0, 'Ưu việt': 0.1, 'Hiếm': 0.22, 'Sử thi': 0.35, 'Huyền thoại': 0.48 }[species.rank] || 0;
-        const successRate = Math.max(0.22, 0.82 - rankPenalty);
-
-        if (Math.random() < successRate) {
-          const stageMult = stageIdx === 0 ? 0.75 : stageIdx === 1 ? 1.0 : 1.3;
-          const pet = {
-            uid: Date.now() + Math.random(),
-            speciesId: species.id,
-            name: species.name,
-            rank: species.rank,
-            stageIdx,
-            mutated: false,
-            mutateTo: species.mutateTo,
-            atk: Math.round(species.atk * stageMult),
-            def: Math.round(species.def * stageMult),
-            hp: Math.round(species.hp * stageMult)
-          };
-          state.tamedBeasts.push(pet);
-          logMsg(`Thuần hóa thành công [${species.rank}] ${species.name} (${stage})! Sức mạnh thú: Công ${pet.atk} / Thủ ${pet.def}.`);
-          if (species.rank === 'Sử thi' || species.rank === 'Huyền thoại') {
-            addWorldMsg(`[Kỳ tích] Một người chơi vừa thuần hóa thành công thú bậc ${species.rank}: ${species.name}!`);
-          }
-        } else {
-          logMsg(`Gặp [${species.rank}] ${species.name} (${stage}) nhưng thú cảnh giác bỏ chạy, tốn 1 Mồi thuần hóa.`);
-        }
-      } else if (type === 'mutate') {
-        if (state.inv.bloodline <= 0 || state.tamedBeasts.length === 0) {
-          logMsg('Cần ít nhất 1 thú đã thuần hóa và 1 Vật phẩm huyết mạch để dung hợp đột biến!');
-          renderAll();
-          return;
-        }
-        const target = state.tamedBeasts.find(b => !b.mutated) || state.tamedBeasts[0];
-        state.inv.bloodline -= 1;
-        target.mutated = true;
-        target.name = target.mutateTo;
-        target.atk = Math.round(target.atk * 1.45);
-        target.def = Math.round(target.def * 1.45);
-        target.hp = Math.round(target.hp * 1.5);
-        state.inv.blueprint += 1;
-        logMsg(`Đột biến huyết mạch thành công! Thú tiến hóa thành loài mới [${target.name}] (Công ${target.atk} / Thủ ${target.def}) và hé lộ +1 Bản vẽ!`);
-        addWorldMsg(`[Đột biến] Huyết mạch thức tỉnh — xuất hiện loài đột biến mới: ${target.name}!`);
-      } else if (type === 'chest') {
-        if (state.inv.chest <= 0) {
-          logMsg('Bạn chưa có Rương báu nào để mở.');
-          renderAll();
-          return;
-        }
-        state.inv.chest -= 1;
-        const bonusWood = 12 + state.day;
-        const bonusOre = 3 + Math.floor(state.day / 10);
-        state.inv.wood += bonusWood;
-        state.inv.ore += bonusOre;
-        if (Math.random() < 0.45) state.inv.blueprint += 1;
-        if (Math.random() < 0.35) state.inv.bloodline += 1;
-        logMsg(`Mở Rương báu nhận +${bonusWood} Gỗ, +${bonusOre} Quặng cùng cơ hội nhận Bản vẽ & Huyết mạch!`);
+      if (Math.random() > winChance) {
+        const dmg = Math.max(6, Math.round((isLord ? 22 : 11) * (1 + state.day * 0.01) - state.houseLevel * 1.5 - bBonus.threatCut));
+        state.hp = Math.max(1, state.hp - dmg);
+        logMsg(`Giao chiến với ${sp.name} (${enc.packSize} con)${isLord ? ' [Lãnh chúa]' : ''}: bạn bị thương -${dmg} HP!`);
+        renderAll();
+        return;
       }
 
+      const lootMult = isLord ? 2.5 : 1;
+      const meatGain = Math.max(2, Math.round(2 * lootMult * dayScale));
+      const hideGain = Math.max(1, Math.round(1 * lootMult * dayScale));
+      const featherGain = isLord ? 2 : (Math.random() < 0.5 ? 1 : 0);
+
+      state.inv.meat += meatGain;
+      state.inv.hide += hideGain;
+      state.inv.feather += featherGain;
+
+      if (isLord) {
+        state.inv.bloodline += 1;
+        state.inv.ore += 2;
+        logMsg(`Hạ gục LÃNH CHÚA [${sp.rank}] ${sp.name} (đàn ${enc.packSize} con)! Phân giải nhận +${meatGain} Thịt, +${hideGain} Da, +${featherGain} Lông, +1 Huyết mạch, +2 Quặng.`);
+        addWorldMsg(`[Tin chấn động] Đàn ${sp.name} đạt ${enc.packSize} con sinh Lãnh chúa và đã bị hạ gục!`);
+      } else {
+        logMsg(`Hạ gục & phân giải ${sp.name} (${enc.packSize} con): nhận +${meatGain} Thịt, +${hideGain} Da, +${featherGain} Lông.`);
+      }
+
+      const chestChance = Math.min(0.9, 0.25 + state.day * 0.006 + (isLord ? 0.35 : 0));
+      if (Math.random() < chestChance) {
+        state.inv.chest += 1;
+        logMsg(`Chiến lợi phẩm có thêm +1 Rương báu rơi từ ${isLord ? 'Lãnh chúa ' : ''}${sp.name}!`);
+      }
+
+      state.activeEncounter = null;
+      renderAll();
+    }
+
+    function dismissEncounter() {
+      if (state.activeEncounter) {
+        logMsg(`Bạn rút lui an toàn khỏi khu vực có ${state.activeEncounter.species.name}.`);
+        state.activeEncounter = null;
+      }
+      renderAll();
+    }
+
+    function openChest() {
+      if (state.inv.chest <= 0) {
+        logMsg('Bạn chưa có Rương báu nào để mở.');
+        renderAll();
+        return;
+      }
+      state.inv.chest -= 1;
+      const bonusWood = 12 + state.day;
+      const bonusOre = 3 + Math.floor(state.day / 10);
+      state.inv.wood += bonusWood;
+      state.inv.ore += bonusOre;
+      if (Math.random() < 0.45) state.inv.blueprint += 1;
+      if (Math.random() < 0.35) state.inv.bloodline += 1;
+      logMsg(`Mở Rương báu nhận +${bonusWood} Gỗ, +${bonusOre} Quặng cùng cơ hội nhận Bản vẽ & Huyết mạch!`);
       renderAll();
     }
 
     function selectItem(key) {
       state.selectedItem = key;
+      renderAll();
+    }
+
+    function selectBeast(uid) {
+      state.selectedPetUid = uid;
+      renderAll();
+    }
+
+    function mutateSelectedBeast() {
+      const pet = state.tamedBeasts.find(b => b.uid === state.selectedPetUid);
+      if (!pet) {
+        logMsg('Hãy bấm chọn một thú cưng cụ thể trước khi dùng Vật phẩm huyết mạch!');
+        renderAll();
+        return;
+      }
+      if ((state.inv.bloodline || 0) <= 0) {
+        logMsg('Bạn không có Vật phẩm Huyết mạch nào!');
+        renderAll();
+        return;
+      }
+      if (pet.mutated) {
+        logMsg(`${pet.name} đã đột biến huyết mạch rồi — hãy chọn thú cưng khác chưa đột biến.`);
+        renderAll();
+        return;
+      }
+
+      state.inv.bloodline -= 1;
+      const oldName = pet.name;
+      pet.mutated = true;
+      pet.name = pet.mutateTo;
+      pet.atk = Math.round(pet.atk * 1.45);
+      pet.def = Math.round(pet.def * 1.45);
+      pet.hp = Math.round(pet.hp * 1.5);
+      state.inv.blueprint += 1;
+      logMsg(`Dung hợp huyết mạch cho [${oldName}] thành công! Tiến hóa riêng thành loài đột biến [${pet.name}] (Công ${pet.atk} / Thủ ${pet.def}) & nhận +1 Bản vẽ!`);
+      addWorldMsg(`[Đột biến] Thú cưng ${oldName} đã dung hợp huyết mạch đột biến thành ${pet.name}!`);
       renderAll();
     }
 
@@ -978,17 +978,17 @@
         state.hp = Math.min(100, state.hp + 12);
         logMsg('Bạn ăn Thịt thú: +30 Độ no, +12 HP.');
       } else if (key === 'bait') {
-        runAction('tame');
+        encounterWildBeast();
         return;
       } else if (key === 'blueprint') {
         state.inv.blueprint -= 1;
         state.researchedBlueprints += 1;
         logMsg(`Bạn kích hoạt Cuộn Bản Vẽ! Tổng bản vẽ đã nghiên cứu: ${state.researchedBlueprints} (giảm bớt nguyên liệu chế công trình).`);
       } else if (key === 'bloodline') {
-        runAction('mutate');
+        mutateSelectedBeast();
         return;
       } else if (key === 'chest') {
-        runAction('chest');
+        openChest();
         return;
       }
 
@@ -1070,6 +1070,7 @@
         return;
       }
       state.day += 1;
+      state.activeEncounter = null;
       state.hunger = Math.max(0, state.hunger - 18);
       if (state.inv.fish > 0) {
         state.inv.fish -= 1;
@@ -1209,18 +1210,29 @@
       const currentZone = ZONES[state.zone];
       document.getElementById('zone-desc').textContent = currentZone.desc;
 
-      const actionsEl = document.getElementById('action-buttons');
-      actionsEl.innerHTML = `
-        <button onclick="runAction('gather')">Khai thác (${currentZone.name})</button>
-        <button onclick="runAction('hunt')">Săn đàn / Lãnh chúa</button>
-        <button onclick="runAction('tame')">Thuần hóa thú (${state.inv.bait} mồi)</button>
-        <button onclick="runAction('mutate')">Dung hợp Huyết mạch (${state.inv.bloodline})</button>
-        <button onclick="runAction('chest')">Mở Rương báu (${state.inv.chest})</button>
+      document.getElementById('action-buttons').innerHTML = `
+        <button onclick="gatherResources()">Khai thác (${currentZone.name})</button>
+        <button class="primary" onclick="encounterWildBeast()">Gặp Thú hoang</button>
+        <button onclick="openChest()">Mở Rương báu (${state.inv.chest})</button>
       `;
 
-      // Render Balo có thể bấm từng ô
-      const invGrid = document.getElementById('inventory-grid');
-      invGrid.innerHTML = Object.entries(ITEM_DEFS).map(([k, def]) => {
+      // Render vùng chạm trán thú hoang
+      const encBox = document.getElementById('wild-encounter-box');
+      if (state.activeEncounter) {
+        encBox.classList.remove('hidden');
+        const enc = state.activeEncounter;
+        const sp = enc.species;
+        document.getElementById('enc-title').textContent = `Chạm trán tại ${currentZone.name}: ${sp.name}${enc.isLord ? ' [LÃNH CHÚA ĐÀN]' : ''}`;
+        document.getElementById('enc-summary').textContent = `Phát hiện đàn ${enc.packSize} con${enc.isLord ? ' — Đạt ngưỡng sinh thú cấp Lãnh chúa (trâu & sát thương cao)!' : ''}. Hãy chọn hành động:`;
+        document.getElementById('enc-obs').textContent = enc.observed ? enc.obsText : 'Chưa quan sát chi tiết — bấm "Quan sát kỹ" để soi cấp bậc, giai đoạn & tỉ lệ bắt.';
+        document.getElementById('btn-tame-wild').textContent = `Thuần hóa (${state.inv.bait} mồi)`;
+        document.getElementById('btn-tame-wild').disabled = state.inv.bait <= 0;
+      } else {
+        encBox.classList.add('hidden');
+      }
+
+      // Render Balo
+      document.getElementById('inventory-grid').innerHTML = Object.entries(ITEM_DEFS).map(([k, def]) => {
         const activeClass = state.selectedItem === k ? 'selected' : '';
         return `
           <button type="button" class="inv-slot ${activeClass}" onclick="selectItem('${k}')">
@@ -1230,7 +1242,6 @@
         `;
       }).join('');
 
-      // Render bảng thông tin vật phẩm đang chọn trong Balo
       const selDef = ITEM_DEFS[state.selectedItem];
       const count = state.inv[state.selectedItem] || 0;
       const useBtn = document.getElementById('btn-use-item');
@@ -1242,7 +1253,42 @@
         useBtn.textContent = selDef.usable ? selDef.useLabel : 'Không thể dùng trực tiếp';
       }
 
-      // Render Công trình & Kiến trúc chế tạo
+      // Render danh sách thú cưng có thể bấm chọn riêng lẻ
+      if (!state.selectedPetUid && state.tamedBeasts.length > 0) {
+        state.selectedPetUid = state.tamedBeasts[0].uid;
+      }
+      document.getElementById('ui-tamed-count').textContent = state.tamedBeasts.length;
+      const tamedGrid = document.getElementById('tamed-beasts-grid');
+      tamedGrid.innerHTML = state.tamedBeasts.length
+        ? state.tamedBeasts.map(pet => {
+            const isSel = pet.uid === state.selectedPetUid;
+            return `
+              <button type="button" class="inv-slot ${isSel ? 'selected' : ''}" onclick="selectBeast('${pet.uid}')">
+                <div><strong>${pet.name}</strong>${pet.mutated ? ' ✦' : ''}</div>
+                <div style="color:var(--muted); font-size:0.78rem;">${pet.rank} • ${STAGES[pet.stageIdx]}</div>
+                <div style="font-size:0.78rem; margin-top:2px;">Công ${pet.atk} | Thủ ${pet.def}</div>
+              </button>
+            `;
+          }).join('')
+        : `<div class="inv-slot" style="color:var(--muted);">Chưa thuần hóa thú nào</div>`;
+
+      const selPet = state.tamedBeasts.find(b => b.uid === state.selectedPetUid);
+      const petBtn = document.getElementById('btn-mutate-selected-pet');
+      if (selPet) {
+        document.getElementById('pet-insp-name').textContent = `${selPet.name} ${selPet.mutated ? '(Đã đột biến huyết mạch)' : ''}`;
+        document.getElementById('pet-insp-meta').textContent = `Bậc: ${selPet.rank} • Giai đoạn: ${STAGES[selPet.stageIdx]} • Công ${selPet.atk} / Thủ ${selPet.def} / HP ${selPet.hp}`;
+        document.getElementById('pet-insp-mut').textContent = selPet.mutated
+          ? 'Đã hoàn tất đột biến huyết mạch.'
+          : `Dùng 1 Vật phẩm Huyết mạch (đang có ${state.inv.bloodline || 0}) để đột biến thành: ${selPet.mutateTo}`;
+        petBtn.disabled = selPet.mutated || (state.inv.bloodline || 0) <= 0;
+      } else {
+        document.getElementById('pet-insp-name').textContent = 'Chưa chọn thú cưng';
+        document.getElementById('pet-insp-meta').textContent = 'Hãy đi phiêu lưu, bấm "Gặp Thú hoang" rồi "Thuần hóa" để có thú cưng.';
+        document.getElementById('pet-insp-mut').textContent = 'Đột biến dự kiến: -';
+        petBtn.disabled = true;
+      }
+
+      // Render Công trình
       const structContainer = document.getElementById('structures-list');
       const discountFactor = state.researchedBlueprints > 0 ? 0.8 : 1;
       structContainer.innerHTML = STRUCTURES.map(s => {
@@ -1263,7 +1309,7 @@
         `;
       }).join('');
 
-      // Render Nâng cấp Nhà gỗ
+      // Render Nhà gỗ
       const hCfg = HOUSE_LEVELS[state.houseLevel - 1];
       const upBtn = document.getElementById('btn-upgrade-house');
       const reqEl = document.getElementById('house-req');
@@ -1275,22 +1321,6 @@
         upBtn.disabled = false;
         const costStr = Object.entries(hCfg.cost).map(([k, v]) => `${ITEM_DEFS[k].name}: ${v}`).join(', ');
         reqEl.textContent = `Nâng cấp lên Cấp ${state.houseLevel + 1} cần: ${costStr} — Mở: ${HOUSE_LEVELS[state.houseLevel].unlock}`;
-      }
-
-      // Render Thú đã thuần hóa
-      const tamedCountEl = document.getElementById('ui-tamed-count');
-      const tamedGrid = document.getElementById('tamed-beasts-grid');
-      if (tamedCountEl && tamedGrid) {
-        tamedCountEl.textContent = state.tamedBeasts.length;
-        tamedGrid.innerHTML = state.tamedBeasts.length
-          ? state.tamedBeasts.map(pet => `
-              <div class="inv-slot">
-                <div><strong>${pet.name}</strong>${pet.mutated ? ' ✦' : ''}</div>
-                <div style="color:var(--muted); font-size:0.78rem;">${pet.rank} • ${STAGES[pet.stageIdx]}</div>
-                <div style="font-size:0.78rem; margin-top:2px;">Công ${pet.atk} | Thủ ${pet.def}</div>
-              </div>
-            `).join('')
-          : `<div class="inv-slot" style="color:var(--muted);">Chưa thuần hóa thú nào</div>`;
       }
 
       renderTrades();
