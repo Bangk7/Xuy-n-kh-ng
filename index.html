@@ -52,7 +52,7 @@
     .mat-ok { color: var(--ok); font-weight: 700; }
     .mat-bad { color: var(--bad); font-weight: 700; }
 
-    #intro-overlay, #victory-overlay, #gameover-overlay, #craft-block-overlay, #levelup-overlay {
+    #intro-overlay, #victory-overlay, #gameover-overlay, #craft-block-overlay, #levelup-overlay, #chest-reward-overlay {
       position: fixed;
       inset: 0;
       background: rgba(7, 10, 16, 0.92);
@@ -73,12 +73,40 @@
       padding: 24px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.75);
     }
-    .victory-modal { border-color: #fbbf24; box-shadow: 0 0 40px rgba(251, 191, 36, 0.25); }
+    .victory-modal, .chest-modal { border-color: #fbbf24; box-shadow: 0 0 42px rgba(251, 191, 36, 0.28); }
     .levelup-modal { border-color: #38bdf8; box-shadow: 0 0 40px rgba(56, 189, 248, 0.3); }
     .gameover-modal { border-color: #ef4444; box-shadow: 0 0 40px rgba(239, 68, 68, 0.3); }
     .warn-modal { border-color: #f59e0b; box-shadow: 0 0 40px rgba(245, 158, 11, 0.28); }
     .intro-title { font-size: 1.5rem; color: #fbbf24; margin-bottom: 8px; }
     .intro-sub { color: var(--muted); margin-bottom: 18px; }
+
+    .chest-loot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .chest-loot-btn {
+      background: #0e1522;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: left;
+      font-size: 0.86rem;
+    }
+    .chest-loot-btn.active {
+      border-color: #fbbf24;
+      background: #232836;
+      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.5);
+    }
+    .chest-item-detail {
+      background: #0b0f17;
+      border: 1px solid #38bdf8;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 14px;
+      font-size: 0.88rem;
+    }
 
     .wheel-stage {
       display: flex;
@@ -512,7 +540,7 @@
       <h1 class="intro-title">Chào mừng đến Thế Giới Sinh Tồn Trong Sương Mù — 100 Ngày Xuyên Không</h1>
       <p class="intro-sub">
         Thời gian trong game chạy theo thời gian thực: <strong>1 giờ trong game = 5 phút ngoài đời</strong> (Ngày 12h: 06:00–18:00, Đêm 12h: 18:00–06:00).
-        Vật phẩm mang theo có thể dùng khi thám hiểm (dư sẽ hoàn về Nhà gỗ); thú tích EXP chậm 1–2 ngày/Lv, xếp hạng chiến lực S–F và NPC AI phản hồi trên kênh thế giới.
+        Mở rương hiện thưởng toàn màn hình có thể bấm xem vật phẩm trực tiếp; thú tích EXP chậm 1–2 ngày/Lv và xếp hạng chiến lực S–F.
       </p>
 
       <div id="step-welcome">
@@ -528,6 +556,19 @@
         </div>
         <div id="cards-container" class="cards-grid hidden"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- BẢNG THƯỞNG MỞ RƯƠNG TOÀN MÀN HÌNH (BẤM XEM TRỰC TIẾP VẬT PHẨM) -->
+  <div id="chest-reward-overlay" class="hidden">
+    <div class="fullscreen-modal chest-modal">
+      <h2 id="chest-reward-title" style="font-size:1.45rem; color:#fbbf24; margin-bottom:6px;">PHẦN THƯỞNG MỞ RƯƠNG</h2>
+      <p style="font-size:0.9rem; color:var(--muted); margin-bottom:8px;">
+        Bấm vào từng vật phẩm bên dưới để xem trực tiếp thông tin chi tiết ngay trên thông báo:
+      </p>
+      <div id="chest-reward-grid" class="chest-loot-grid"></div>
+      <div id="chest-reward-detail" class="chest-item-detail"></div>
+      <button class="primary" onclick="closeChestRewardModal()">Nhận xong & Đóng</button>
     </div>
   </div>
 
@@ -640,7 +681,7 @@
           <button onclick="returnToHouse()">Về Nhà gỗ (Hoàn đồ dư)</button>
         </div>
 
-        <!-- VẬT PHẨM MANG THEO KHI ĐANG THÁM HIỂM (CÓ THỂ SỬ DỤNG NGAY, DƯ SẼ HOÀN VỀ NHÀ GỖ) -->
+        <!-- VẬT PHẨM MANG THEO KHI ĐANG THÁM HIỂM -->
         <div class="modal-card hidden" id="expedition-pack-box">
           <div style="font-weight:700; color:#38bdf8;" id="exp-pack-title">Vật phẩm mang theo khi thám hiểm</div>
           <div style="font-size:0.8rem; color:var(--cbd5e1); margin-top:2px;">
@@ -776,7 +817,7 @@
           <button type="button" onclick="togglePanel('handbook-panel')">Ẩn bảng</button>
         </div>
         <div style="font-size:0.88rem; color:var(--muted);">
-          <p style="margin-bottom:6px;">• <strong>Vật phẩm mang theo:</strong> Dùng được khi đang thám hiểm; dư ra sẽ hoàn về Nhà gỗ khi quay về.</p>
+          <p style="margin-bottom:6px;">• <strong>Mở rương toàn màn hình:</strong> Hiện thưởng toàn màn hình, bấm trực tiếp vào vật phẩm để xem chi tiết.</p>
           <p style="margin-bottom:6px;">• <strong>EXP & Độ hiếm thú:</strong> Mất ~1–2 ngày game/Lv, Lv càng cao càng khó/lâu lên; độ hiếm chênh lệch thực lực rõ rệt và tự đánh giá bậc S–F.</p>
           <p>• <strong>Kênh Thế Giới AI:</strong> Các NPC tự phản hồi ngữ cảnh theo lời nhắn của bạn trên kênh thế giới.</p>
         </div>
@@ -903,7 +944,6 @@
       { idx: 2, name: 'Trưởng thành', maxLv: 10, canFight: true, statMult: 1.45 }
     ];
 
-    // Chênh lệch mạnh giữa các độ hiếm: Phổ thông < Ưu việt < Hiếm < Huyền thoại
     const RARITY_MULT = {
       'Phổ thông': { atk: 1.0, def: 1.0, hp: 1.0, cp: 1.0 },
       'Ưu việt': { atk: 1.45, def: 1.4, hp: 1.5, cp: 1.5 },
@@ -993,10 +1033,11 @@
         selectedStrategyId: 'cautious',
         prepPetUid: 'starter_wolf',
         prepItems: {},
-        expeditionPack: {}, // Vật phẩm đang mang theo trong chuyến thám hiểm hiện tại
+        expeditionPack: {},
         markedMonsters: {},
         selectedItem: 'chest_bronze',
         selectedPetUid: 'starter_wolf',
+        chestRewardModal: null,
         activeExploreSession: null,
         lastExploreReport: null,
         unlockedRecipes: [],
@@ -1122,13 +1163,12 @@
       renderAll();
     }
 
-    // Mất ~1–2 ngày game (1440–2880 phút) cho mỗi Lv; Lv càng cao càng khó/lâu lên
     function advancePetGrowth(pet, gameMinutes, combatBoost = false) {
       if (gameMinutes <= 0) return;
       const talentMult = state.talent?.rank === 'B' ? 1.25 : 1.0;
       const fightMult = combatBoost ? 2.4 : 1.0;
       const lvDifficulty = Math.pow(1.22, Math.max(0, (pet.lv || 1) - 1));
-      const minutesPerLevel = 1560 * lvDifficulty; // ~26h game ở Lv1, tăng dần theo Lv
+      const minutesPerLevel = 1560 * lvDifficulty;
       const pctGain = (gameMinutes / minutesPerLevel) * 100 * talentMult * fightMult;
       pet.growthPct = (pet.growthPct || 0) + pctGain;
 
@@ -1246,7 +1286,6 @@
       renderWorldChat();
     }
 
-    // AI phản hồi thông minh cho NPC trên kênh thế giới
     function generateNpcWorldAiReply(userMsg) {
       const q = userMsg.toLowerCase();
       const petCount = state.tamedBeasts.length;
@@ -1257,8 +1296,8 @@
         const petInfo = topPet ? `${topPet.name} đang đạt Chiến lực ${topCp.score} (Bậc ${topCp.tier})` : 'chưa có thú nào';
         return `[Diệp An AI] Độ hiếm thú chênh lệch rất lớn; hiện bạn có ${petCount} thú (${petInfo}). Lưu ý EXP càng cao càng lên cấp chậm nhé!`;
       }
-      if (q.includes('bản đồ') || q.includes('thám hiểm') || q.includes('xa') || q.includes('vật phẩm') || q.includes('balo')) {
-        return `[Lâm Linh AI] Điểm càng xa càng tốn thời gian. Vật phẩm mang theo dùng được ngay lúc thám hiểm, dư ra sẽ tự hoàn về Nhà gỗ khi quay về!`;
+      if (q.includes('rương') || q.includes('thưởng') || q.includes('bản đồ') || q.includes('thám hiểm')) {
+        return `[Lâm Linh AI] Mở rương sẽ hiện thưởng toàn màn hình, bấm trực tiếp vào vật phẩm để xem thông tin ngay. Điểm càng xa càng tốn thời gian!`;
       }
       if (q.includes('chế tạo') || q.includes('rìu') || q.includes('cuốc') || q.includes('bản vẽ')) {
         return `[Trần Minh AI] Nhớ quay về Nhà gỗ mới chế tạo được. Rìu & Cuốc chim tăng sức mạnh và sản lượng, còn bản vẽ giờ khá hiếm đấy.`;
@@ -1297,6 +1336,7 @@
       document.getElementById('victory-overlay').classList.add('hidden');
       document.getElementById('levelup-overlay').classList.add('hidden');
       document.getElementById('craft-block-overlay').classList.add('hidden');
+      document.getElementById('chest-reward-overlay').classList.add('hidden');
       document.getElementById('adventure-log').innerHTML = '';
       state = createInitialState();
       document.getElementById('cards-container').classList.add('hidden');
@@ -1412,7 +1452,6 @@
       document.getElementById('craft-block-overlay').classList.add('hidden');
     }
 
-    // Quay về Nhà gỗ: tự động hoàn trả toàn bộ vật phẩm đang mang theo chưa sử dụng về Nhà gỗ
     function returnToHouse() {
       if (state.isDead) return;
       if (state.locationId === 'house') {
@@ -1435,7 +1474,6 @@
       renderAll();
     }
 
-    // Sử dụng vật phẩm đang mang theo ngay trong lúc thám hiểm
     function useExpeditionItem(itemKey) {
       if (state.isDead || state.locationId === 'house') return;
       const cur = state.expeditionPack[itemKey] || 0;
@@ -1553,7 +1591,6 @@
       const maxCap = getMaxBagCapacity();
       const remainingCarryFactor = Math.max(0.25, (maxCap - usedCap * 0.75) / Math.max(1, maxCap));
 
-      // Chuyển vật phẩm đã chọn vào hành trang thám hiểm (có thể dùng khi thám hiểm, dư sẽ hoàn về Nhà gỗ)
       const broughtList = [];
       for (const [k, qty] of Object.entries(state.prepItems)) {
         if (qty > 0 && (state.inv[k] || 0) >= qty) {
@@ -1598,7 +1635,6 @@
         broughtList.length ? `Mang theo: ${broughtList.join(', ')}` : 'Hành trang nhẹ nhàng'
       ];
 
-      // Giảm tỷ lệ rơi bản vẽ
       const bpBonus = state.talent?.rank === 'C' ? 0.04 : 0;
       if (Math.random() < 0.25 * loc.lootMult) {
         const chestRoll = Math.random();
@@ -1921,6 +1957,54 @@
       renderAll();
     }
 
+    function openChestRewardModal(chestName, rewards, selectedIdx = 0) {
+      state.chestRewardModal = { chestName, rewards, selectedIdx };
+      document.getElementById('chest-reward-title').textContent = `PHẦN THƯỞNG MỞ ${chestName.toUpperCase()}`;
+      renderChestRewardModal();
+      document.getElementById('chest-reward-overlay').classList.remove('hidden');
+    }
+
+    function selectChestRewardItem(idx) {
+      if (!state.chestRewardModal) return;
+      state.chestRewardModal.selectedIdx = idx;
+      renderChestRewardModal();
+    }
+
+    function renderChestRewardModal() {
+      const modal = state.chestRewardModal;
+      if (!modal) return;
+      const grid = document.getElementById('chest-reward-grid');
+      grid.innerHTML = modal.rewards.map((rw, idx) => {
+        const active = idx === modal.selectedIdx ? 'active' : '';
+        return `
+          <button type="button" class="chest-loot-btn ${active}" onclick="selectChestRewardItem(${idx})">
+            <div style="font-weight:700; color:#fbbf24;">${rw.name}</div>
+            <div style="color:#86efac; font-size:0.84rem; margin-top:2px;">+${rw.qty}</div>
+            <div style="color:#93c5fd; font-size:0.74rem; margin-top:3px;">Bấm xem chi tiết</div>
+          </button>
+        `;
+      }).join('');
+
+      const cur = modal.rewards[modal.selectedIdx] || modal.rewards[0];
+      const def = ITEM_DEFS[cur.key];
+      const detailEl = document.getElementById('chest-reward-detail');
+      if (cur && def) {
+        detailEl.innerHTML = `
+          <div style="font-weight:700; color:#38bdf8; font-size:1rem;">${def.name} (+${cur.qty})</div>
+          <div style="color:var(--muted); font-size:0.82rem; margin-top:2px;">Phân loại: <strong>${def.category}</strong> • Sức nặng: <strong>${def.weight}</strong></div>
+          <p style="margin-top:6px; color:var(--text);">${def.desc}</p>
+        `;
+      } else {
+        detailEl.textContent = '';
+      }
+    }
+
+    function closeChestRewardModal() {
+      state.chestRewardModal = null;
+      document.getElementById('chest-reward-overlay').classList.add('hidden');
+      renderAll();
+    }
+
     function openChestTier(tierIdx) {
       const tier = CHEST_TIERS[tierIdx];
       if (!tier || (state.inv[tier.key] || 0) <= 0) return;
@@ -1929,13 +2013,20 @@
       state.inv.stone += tier.stone;
       state.inv.ore += tier.ore;
 
-      const drops = [`+${tier.wood} Gỗ`, `+${tier.stone} Đá`, `+${tier.ore} Quặng`];
+      const rewards = [
+        { key: 'wood', name: ITEM_DEFS.wood.name, qty: tier.wood },
+        { key: 'stone', name: ITEM_DEFS.stone.name, qty: tier.stone },
+        { key: 'ore', name: ITEM_DEFS.ore.name, qty: tier.ore }
+      ];
+
       const bpKey = pickBlueprintItem();
       if (bpKey && Math.random() < tier.bpChance) {
         state.inv[bpKey] = (state.inv[bpKey] || 0) + 1;
-        drops.push(`+1 ${ITEM_DEFS[bpKey].name}`);
+        rewards.push({ key: bpKey, name: ITEM_DEFS[bpKey].name, qty: 1 });
       }
-      logMsg(`Mở ${tier.name} nhận: ${drops.join(', ')}!`);
+
+      logMsg(`Mở ${tier.name} nhận: ${rewards.map(r => `+${r.qty} ${r.name}`).join(', ')}!`);
+      openChestRewardModal(tier.name, rewards, 0);
       renderAll();
     }
 
@@ -2215,7 +2306,6 @@
 
       document.getElementById('hp-danger-banner').classList.toggle('hidden', !(state.hp < 40 && !state.isDead));
 
-      // Vật phẩm đang mang theo khi thám hiểm
       const expPackBox = document.getElementById('expedition-pack-box');
       const packEntries = Object.entries(state.expeditionPack).filter(([, q]) => q > 0);
       if (state.locationId !== 'house' && packEntries.length > 0) {
@@ -2235,7 +2325,6 @@
         expPackBox.classList.add('hidden');
       }
 
-      // Bản đồ chọn điểm thám hiểm, chiến lược & hành trang
       const mapBox = document.getElementById('world-map-box');
       if (state.mapOpen) {
         mapBox.classList.remove('hidden');
@@ -2290,7 +2379,6 @@
         mapBox.classList.add('hidden');
       }
 
-      // Bảng chiến đấu
       const expCombatBox = document.getElementById('explore-combat-box');
       if (state.activeExploreSession && state.activeExploreSession.combat) {
         expCombatBox.classList.remove('hidden');
@@ -2333,7 +2421,6 @@
         expCombatBox.classList.add('hidden');
       }
 
-      // Báo cáo thám hiểm
       const expRepBox = document.getElementById('explore-report-box');
       if (state.lastExploreReport) {
         expRepBox.classList.remove('hidden');
@@ -2345,7 +2432,6 @@
         expRepBox.classList.add('hidden');
       }
 
-      // Balo
       const baseSlots = Object.entries(ITEM_DEFS).map(([k, def]) => {
         const activeClass = state.selectedItem === k ? 'selected' : '';
         return `
@@ -2393,7 +2479,6 @@
         }
       }
 
-      // Danh sách đang thu phục theo thời gian game
       document.getElementById('ui-taming-count').textContent = state.tamingQueue.length;
       document.getElementById('taming-queue-grid').innerHTML = state.tamingQueue.length
         ? state.tamingQueue.map(t => {
@@ -2408,7 +2493,6 @@
           }).join('')
         : `<div class="inv-slot" style="color:var(--muted);">Không có thú nào đang thu phục</div>`;
 
-      // Bảng thông tin thú đã thu phục + xếp hạng chiến lực S/A/B/C/D/E/F
       if (!state.selectedPetUid && state.tamedBeasts.length > 0) {
         state.selectedPetUid = state.tamedBeasts[0].uid;
       }
